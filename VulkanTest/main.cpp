@@ -12,7 +12,7 @@ const uint32_t WIDTH = 800;
 const uint32_t HEIGHT = 600;
 
 const std::vector<const char*> validationLayers = {
-	"VK_LAYER_KHRONOS_VALIDATION"
+	"VK_LAYER_KHRONOS_validation"
 };
 
 #ifdef NDEBUG
@@ -75,7 +75,7 @@ private:
 	void createInstance() {
 		if (enableValidationLayers && !checkValidationLayerSupport()) {
 			throw std::runtime_error("validation layers requested, but not available");
-		} // Contiue from here
+		}
 
 		VkApplicationInfo appInfo{};
 		appInfo.sType = VK_STRUCTURE_TYPE_APPLICATION_INFO;
@@ -96,7 +96,14 @@ private:
 
 		createInfo.enabledExtensionCount = glfwExtensionCount;
 		createInfo.ppEnabledExtensionNames = glfwExtensions;
-		createInfo.enabledLayerCount = 0;
+
+		if (enableValidationLayers) {
+			createInfo.enabledLayerCount = static_cast<uint32_t>(validationLayers.size());
+			createInfo.ppEnabledLayerNames = validationLayers.data();
+		}
+		else {
+			createInfo.enabledLayerCount = 0;
+		}
 
 		uint32_t extensionCount = 0;
 		vkEnumerateInstanceExtensionProperties(nullptr, &extensionCount, nullptr);
@@ -115,7 +122,7 @@ private:
 			std::cout << '\t' << extension.extensionName << '\n';
 		}
 		std::cout << "required glfw extensions:\n";
-		for (int i = 0; i < glfwExtensionCount; i++) {
+		for (uint32_t i = 0; i < glfwExtensionCount; i++) {
 			std::cout << '\t' << glfwExtensions[i] << '\n';
 		} // End extra -----------------------------------------
 		
@@ -131,11 +138,14 @@ private:
 
 		for (const char* layerName : validationLayers) {
 			bool layerFound = false;
+			std::cout << "required layer: " << layerName << '\n';
 
 			for (const auto& layerProperties : availableLayers) {
+				std::cout << "current layer: " << layerProperties.layerName << '\n';
 				if (strcmp(layerName, layerProperties.layerName) == 0) {
 					layerFound = true;
-					break;
+					std::cout << "layer found: " << layerProperties.layerName << '\n';
+					//break;
 				}
 			}
 
