@@ -4,6 +4,8 @@
 #include <iostream>
 #include <stdexcept>
 #include <cstdlib>
+
+// Tutorial extra
 #include <vector>
 
 const uint32_t WIDTH = 800;
@@ -20,9 +22,11 @@ public:
 
 private:
 	GLFWwindow* window;
+
+	VkInstance instance;
+
 	GLFWmonitor* monitorPrimary;
 	GLFWmonitor** monitors;
-	VkInstance instance;
 
 	void initWindow() {
 		glfwInit();
@@ -31,16 +35,31 @@ private:
 		glfwWindowHint(GLFW_CLIENT_API, GLFW_NO_API);
 		glfwWindowHint(GLFW_RESIZABLE, GLFW_FALSE);
 
+		// Me messing around
 		int monitorsCount;
 		monitorPrimary = glfwGetPrimaryMonitor();
 		monitors = glfwGetMonitors(&monitorsCount);
 		std::cout << "monitors:" << monitorsCount << std::endl;
+
 		window = glfwCreateWindow(WIDTH, HEIGHT, "Vulkan", nullptr, nullptr);
-		
 	}
 
 	void initVulkan() {
 		createInstance();
+	}
+
+	void mainLoop() {
+		while (!glfwWindowShouldClose(window)) {
+			glfwPollEvents();
+		}
+	}
+
+	void cleanup() {
+		vkDestroyInstance(instance, nullptr);
+
+		glfwDestroyWindow(window);
+
+		glfwTerminate();
 	}
 
 	void createInstance() {
@@ -55,7 +74,7 @@ private:
 		VkInstanceCreateInfo createInfo{};
 		createInfo.sType = VK_STRUCTURE_TYPE_INSTANCE_CREATE_INFO;
 		createInfo.pApplicationInfo = &appInfo;
-		
+
 		uint32_t glfwExtensionCount = 0;
 		const char** glfwExtensions;
 
@@ -68,6 +87,11 @@ private:
 		uint32_t extensionCount = 0;
 		vkEnumerateInstanceExtensionProperties(nullptr, &extensionCount, nullptr);
 
+		if (vkCreateInstance(&createInfo, nullptr, &instance) != VK_SUCCESS) {
+			throw std::runtime_error("failed to create instance!");
+		}
+
+		// Tutorial extra
 		std::vector<VkExtensionProperties> extensions(extensionCount);
 
 		vkEnumerateInstanceExtensionProperties(nullptr, &extensionCount, extensions.data());
@@ -77,34 +101,13 @@ private:
 			std::cout << '\t' << extension.extensionName << '\n';
 		}
 		std::cout << "required glfw extensions:\n";
-		for (int i=0; i < glfwExtensionCount; i++) {
+		for (int i = 0; i < glfwExtensionCount; i++) {
 			std::cout << '\t' << glfwExtensions[i] << '\n';
-		}
-
-
-		if (vkCreateInstance(&createInfo, nullptr, &instance) != VK_SUCCESS) {
-			throw std::runtime_error("failed to create instance!");
-		}
-
-		std::cout << "Done initialising Volkan instance.\n";
-
-
-	}
-
-	void mainLoop() {
-		while (!glfwWindowShouldClose(window)) {
-			glfwPollEvents();
-		}
-	}
-
-	void cleanup() {
-		glfwDestroyWindow(window);
-
-
-		glfwTerminate();
+		} // End extra -----------------------------------------
+		
+		std::cout << "Done initialising Volkan instance.\n"; // Me
 	}
 };
-
 
 int main() {
 	HelloTriangleApplication app;
@@ -119,5 +122,4 @@ int main() {
 
 	return EXIT_SUCCESS;
 }
-
 
