@@ -101,7 +101,7 @@ private:
 			std::cout << '\t' << extension.extensionName << '\n';
 		}
 		std::cout << "required glfw extensions:\n";
-		for (int i = 0; i < glfwExtensionCount; i++) {
+		for (uint32_t i = 0; i < glfwExtensionCount; i++) {
 			std::cout << '\t' << glfwExtensions[i] << '\n';
 		} // End extra -----------------------------------------
 		
