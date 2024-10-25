@@ -5,8 +5,8 @@
 #include <stdexcept>
 #include <cstdlib>
 
-// Tutorial extra
 #include <vector>
+#include <map>
 
 const uint32_t WIDTH = 800;
 const uint32_t HEIGHT = 600;
@@ -66,6 +66,7 @@ private:
 	void initVulkan() {
 		createInstance();
 		setupDebugMessenger();
+		pickPhysicalDevice();
 	}
 
 	void mainLoop() {
@@ -107,7 +108,7 @@ private:
 		createInfo.enabledExtensionCount = static_cast<uint32_t>(glfwExtensions.size());
 		createInfo.ppEnabledExtensionNames = glfwExtensions.data();
 		// Messing
-		for (uint32_t i = 0; i < glfwExtensions.size(); i++) {
+		for (int i = 0; i < glfwExtensions.size(); i++) {
 			std::cout << "extension name: " << glfwExtensions[i] << '\n';
 		}
 		for (const char* extension : glfwExtensions) {
@@ -202,6 +203,74 @@ private:
 		if (CreateDebugUtilsMessengerEXT(instance, &createInfo, nullptr, &debugMessenger) != VK_SUCCESS) {
 			throw std::runtime_error("failed to set up debug messenger!");
 		}
+	}
+
+	void pickPhysicalDevice() {
+		std::cout << "pickPhysicalDevice()" << std::endl;
+
+		VkPhysicalDevice physicalDevice = VK_NULL_HANDLE;
+		uint32_t deviceCount = 0;
+
+		vkEnumeratePhysicalDevices(instance, &deviceCount, nullptr);
+		if (deviceCount == 0) {
+			throw std::runtime_error("failed to find GPUs with Vulkan support!");
+		}
+
+		std::vector<VkPhysicalDevice> devices(deviceCount);
+		vkEnumeratePhysicalDevices(instance, &deviceCount, devices.data());
+
+		// Tutorila extra
+		std::multimap<int, VkPhysicalDevice> candidates; // end
+
+		for (VkPhysicalDevice device : devices) {
+			// extra
+			int score = rateDeviceSuitability(device);
+			candidates.insert(std::make_pair(score, device)); // end
+
+			//if (isDeviceSuitable(device)) {
+			//	physicalDevice = device;
+			//	break;
+			//}
+		}
+
+		// Tutorial extra
+		if (candidates.rbegin()->first > 0) {
+			physicalDevice = candidates.rbegin()->second;
+		}
+		else {
+			throw std::runtime_error("failed to find suitable GPU!");
+		}
+
+		if (physicalDevice == VK_NULL_HANDLE) {
+			throw std::runtime_error("failed to find a suitable GPU!");
+		} // End tutorial extra
+	}
+	// Tutorial Extra
+	int rateDeviceSuitability(VkPhysicalDevice device) {
+		int score = 0;
+
+		VkPhysicalDeviceProperties deviceProperties;
+		VkPhysicalDeviceFeatures deviceFeatures;
+
+		vkGetPhysicalDeviceProperties(device, &deviceProperties);
+		vkGetPhysicalDeviceFeatures(device, &deviceFeatures);
+		
+		if (deviceProperties.deviceType == VK_PHYSICAL_DEVICE_TYPE_DISCRETE_GPU) score += 1000;
+		score += deviceProperties.limits.maxImageDimension2D;
+		if (!deviceFeatures.geometryShader) return 0;
+
+		return score;
+	} // End tutorial extra;
+
+	bool isDeviceSuitable(VkPhysicalDevice device) {
+		VkPhysicalDeviceProperties deviceProperties;
+		VkPhysicalDeviceFeatures deviceFeatures;
+		
+		vkGetPhysicalDeviceProperties(device, &deviceProperties);
+		vkGetPhysicalDeviceFeatures(device, &deviceFeatures);
+
+		return deviceProperties.deviceType == VK_PHYSICAL_DEVICE_TYPE_DISCRETE_GPU &&
+			deviceFeatures.geometryShader;
 	}
 };
 
