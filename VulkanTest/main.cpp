@@ -83,7 +83,10 @@ private:
 		createInfo.sType = VK_STRUCTURE_TYPE_INSTANCE_CREATE_INFO;
 		createInfo.pApplicationInfo = &appInfo;
 		auto glfwExtensions = getRequiredExtensions();
-		std::cout << &glfwExtensions.data();
+		std::cout << glfwExtensions.data();
+		for (const uint32_t i = 0; i < glfwExtensions.size(); i++) {
+			std::cout << "extension name: " << extension.extensionName();
+		}
 		createInfo.enabledExtensionCount = static_cast<uint32_t>(glfwExtensions.size());
 		createInfo.ppEnabledExtensionNames = glfwExtensions.data();
 		if (isValidationLayersEnabled) {
