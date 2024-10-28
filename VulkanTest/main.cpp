@@ -8,6 +8,9 @@
 #include <vector>
 #include <map>
 
+#include <optional>
+#include <iomanip>
+
 const uint32_t WIDTH = 800;
 const uint32_t HEIGHT = 600;
 
@@ -37,6 +40,14 @@ void DestroyDebugUtilsMessengerEXT(VkInstance instance, VkDebugUtilsMessengerEXT
 		func(instance, debugMessenger, pAllocator);
 	}
 }
+
+struct QueueFamilyIndices {
+	std::optional<uint32_t> graphicsFamily;
+
+	bool isComplete() {
+		return graphicsFamily.has_value();
+	}
+};
 
 class HelloTriangleApplication {
 public:
@@ -206,7 +217,7 @@ private:
 	}
 
 	void pickPhysicalDevice() {
-		std::cout << "pickPhysicalDevice()" << std::endl;
+		std::cout << "picking physical device..." << std::endl;
 
 		VkPhysicalDevice physicalDevice = VK_NULL_HANDLE;
 		uint32_t deviceCount = 0;
@@ -223,14 +234,12 @@ private:
 		std::multimap<int, VkPhysicalDevice> candidates; // end
 
 		for (VkPhysicalDevice device : devices) {
+			if (!isDeviceSuitable(device)) {
+				continue;
+			} 
 			// extra
 			int score = rateDeviceSuitability(device);
 			candidates.insert(std::make_pair(score, device)); // end
-
-			//if (isDeviceSuitable(device)) {
-			//	physicalDevice = device;
-			//	break;
-			//}
 		}
 
 		// Tutorial extra
@@ -259,6 +268,8 @@ private:
 		score += deviceProperties.limits.maxImageDimension2D;
 		if (!deviceFeatures.geometryShader) return 0;
 
+		std::cout << "device: " << deviceProperties.deviceName << std::endl;
+		std::cout << "score: " << score << std::endl;
 		return score;
 	} // End tutorial extra;
 
@@ -269,8 +280,35 @@ private:
 		vkGetPhysicalDeviceProperties(device, &deviceProperties);
 		vkGetPhysicalDeviceFeatures(device, &deviceFeatures);
 
+		QueueFamilyIndices indices = findQueueFamilies(device);
+
 		return deviceProperties.deviceType == VK_PHYSICAL_DEVICE_TYPE_DISCRETE_GPU &&
-			deviceFeatures.geometryShader;
+			deviceFeatures.geometryShader && indices.isComplete();
+	}
+
+	QueueFamilyIndices findQueueFamilies(VkPhysicalDevice device) {
+		QueueFamilyIndices indices;
+		
+		uint32_t queueFamilyCount = 0;
+		vkGetPhysicalDeviceQueueFamilyProperties(device, &queueFamilyCount, nullptr);
+		std::vector<VkQueueFamilyProperties> queueFamilies(queueFamilyCount);
+		vkGetPhysicalDeviceQueueFamilyProperties(device, &queueFamilyCount, queueFamilies.data());
+
+		int i = 0;
+		for (const auto& queueFamily : queueFamilies) {
+			if (queueFamily.queueFlags & VK_QUEUE_GRAPHICS_BIT) {
+				auto bit = queueFamily.queueFlags & VK_QUEUE_GRAPHICS_BIT;
+				std::cout << "queueFamily.queueFlags: 0x" << std::setw(8) << std::setfill('0') << queueFamily.queueFlags << std::endl;
+				std::cout << "queueFamily.queueFlags: 0X" << std::setw(8) << std::setfill('0') << VK_QUEUE_GRAPHICS_BIT << std::endl;
+				std::cout << "queueFamily.queueFlags & VK_QUEUE_GRAPHICS_BIT: " << bit << std::endl;
+				std::cout << "i: " << i << std::endl;
+				indices.graphicsFamily = i;
+			}
+			if (indices.isComplete()) { break; };
+			i++;
+		}
+
+		return indices;
 	}
 };
 
