@@ -62,6 +62,12 @@ private:
 	GLFWwindow* window;
 
 	VkInstance instance;
+
+	VkPhysicalDevice physicalDevice = VK_NULL_HANDLE;
+	VkDevice device;
+
+	VkQueue graphicsQueue;
+
 	VkDebugUtilsMessengerEXT debugMessenger;
 
 	void initWindow() {
@@ -78,6 +84,7 @@ private:
 		createInstance();
 		setupDebugMessenger();
 		pickPhysicalDevice();
+		createLogicalDevice();
 	}
 
 	void mainLoop() {
@@ -92,6 +99,7 @@ private:
 		}
 
 		vkDestroyInstance(instance, nullptr);
+		vkDestroyDevice(device, nullptr);
 
 		glfwDestroyWindow(window);
 
@@ -219,10 +227,9 @@ private:
 	void pickPhysicalDevice() {
 		std::cout << "picking physical device..." << std::endl;
 
-		VkPhysicalDevice physicalDevice = VK_NULL_HANDLE;
 		uint32_t deviceCount = 0;
-
 		vkEnumeratePhysicalDevices(instance, &deviceCount, nullptr);
+
 		if (deviceCount == 0) {
 			throw std::runtime_error("failed to find GPUs with Vulkan support!");
 		}
@@ -309,6 +316,41 @@ private:
 		}
 
 		return indices;
+	}
+
+	VkDevice createLogicalDevice() {
+		QueueFamilyIndices indices = findQueueFamilies(physicalDevice);
+		float queuePriority = 1.0f;
+
+		VkPhysicalDeviceFeatures deviceFeatures{};
+
+		VkDeviceQueueCreateInfo queueCreateInfo{};
+		queueCreateInfo.sType = VK_STRUCTURE_TYPE_DEVICE_QUEUE_CREATE_INFO;
+		queueCreateInfo.queueFamilyIndex = indices.graphicsFamily.value();
+		queueCreateInfo.queueCount = 1;
+		queueCreateInfo.pQueuePriorities = &queuePriority;
+
+		VkDeviceCreateInfo createInfo{};
+		createInfo.sType = VK_STRUCTURE_TYPE_DEVICE_CREATE_INFO;
+		createInfo.pQueueCreateInfos = &queueCreateInfo;
+		createInfo.queueCreateInfoCount = 1;
+		createInfo.pEnabledFeatures = &deviceFeatures;
+		
+		createInfo.enabledExtensionCount = 0;
+		if (isValidationLayersEnabled) {
+			createInfo.enabledLayerCount = static_cast<uint32_t>(validationLayers.size());
+			createInfo.ppEnabledLayerNames = validationLayers.data();
+		}
+		else {
+			createInfo.enabledLayerCount = 0;
+		}
+
+		if (vkCreateDevice(physicalDevice, &createInfo, nullptr, &device) != VK_SUCCESS) {
+			throw std::runtime_error("failed to create logical device!");
+		}
+
+		vkGetDeviceQueue(device, indices.graphicsFamily.value(), 0, &graphicsQueue);
+
 	}
 };
 
