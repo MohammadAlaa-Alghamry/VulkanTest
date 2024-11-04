@@ -95,6 +95,9 @@ private:
 	VkQueue presentQueue;
 
 	VkSwapchainKHR swapChain;
+	std::vector<VkImage> swapChainImages;
+	VkFormat swapChainImageformat;
+	VkExtent2D swapChainExtent;
 
 
 
@@ -541,7 +544,7 @@ private:
 			createInfo.imageSharingMode = VK_SHARING_MODE_EXCLUSIVE;
 			createInfo.queueFamilyIndexCount = 0;
 			createInfo.pQueueFamilyIndices = nullptr;
-		} // Stopped here // Continue from here
+		}
 		
 		createInfo.preTransform = swapChainSupportDetails.capabilities.currentTransform;
 		createInfo.compositeAlpha = VK_COMPOSITE_ALPHA_OPAQUE_BIT_KHR;
@@ -553,6 +556,13 @@ private:
 		if (vkCreateSwapchainKHR(device, &createInfo, nullptr, &swapChain) != VK_SUCCESS) {
 			throw std::runtime_error("failed to create swap chain!");
 		}
+
+		vkGetSwapchainImagesKHR(device, swapChain, &imageCount, nullptr);
+		swapChainImages.resize(imageCount);
+		vkGetSwapchainImagesKHR(device, swapChain, &imageCount, swapChainImages.data());
+
+		swapChainImageformat = surfaceFormat.format;
+		swapChainExtent = extent;
 	}
 
 };
