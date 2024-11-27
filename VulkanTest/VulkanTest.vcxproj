@@ -142,6 +142,11 @@
       <CompileAs Condition="'$(Configuration)|$(Platform)'=='Release|x64'">Default</CompileAs>
     </ClCompile>
   </ItemGroup>
+  <ItemGroup>
+    <None Include="compile.bat" />
+    <None Include="shader.frag" />
+    <None Include="shader.vert" />
+  </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
   </ImportGroup>
