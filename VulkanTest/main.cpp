@@ -665,7 +665,6 @@ private:
 		fragShaderStageInfo.pName = "main";
 
 
-
 		VkPipelineShaderStageCreateInfo shaderStages[] = { vertShaderStageInfo, fragShaderStageInfo };
 
 		std::vector<VkDynamicState> dynamicStates = {
